@@ -16,20 +16,14 @@ class _DashboardState extends State<Dashboard> {
   @override
   Widget build(BuildContext context)
   {
-    return MaterialApp(
-      theme: ThemeData(fontFamily: 'OpenSans'),
-      home:Scaffold(
+    return Scaffold(
         appBar: AppBar(
-          title: const Text('Smart Flask',
-              style: TextStyle(fontFamily: 'Raleway')),
-
-          backgroundColor: Colors.blue,
+          title: const Text('Lumigen',
+              style: TextStyle(fontFamily: 'Raleway')
+          ),
         ),
         body: pages[selectedPageIndex],
         bottomNavigationBar: NavigationBar(
-          backgroundColor: Color.fromRGBO(255, 255, 255, 1),
-          overlayColor: MaterialStateProperty.all(Colors.grey) ,
-          indicatorColor: Colors.grey,
           destinations: const [
             NavigationDestination(
                 icon: Icon(Icons.home),
@@ -52,8 +46,7 @@ class _DashboardState extends State<Dashboard> {
             });
           },
           animationDuration: Duration(milliseconds: 1000),
-        ),
-      ),
+        )
 
 
     );

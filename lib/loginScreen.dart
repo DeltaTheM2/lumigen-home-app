@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lumigen/dashboardScreen.dart';
 import 'package:lumigen/firebase/authentication.dart';
 import 'package:lumigen/signupScreen.dart';
 
@@ -26,7 +27,7 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     if (error == null) {
-      Navigator.pushReplacementNamed(context, '/home');
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) =>  Dashboard()));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
     }

@@ -53,7 +53,6 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        backgroundColor: Colors.blue,
         body: Stack(
           alignment: Alignment.center,
           children: [
@@ -65,7 +64,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 children: [
                   const Spacer(),
                   Text(
-                    'Smart Flask',
+                    'Lumigen',
                     style: GoogleFonts.raleway(
                         fontWeight: FontWeight.bold,
                         fontSize: 40,
