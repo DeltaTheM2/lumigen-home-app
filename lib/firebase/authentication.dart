@@ -111,4 +111,31 @@ class AuthenticationHelper {
       return {};
     }
   }
+  Future<int> getLastAirQuality(String date) async {
+    DocumentReference docRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('air-quality')
+        .doc(date);
+
+    DocumentSnapshot doc = await docRef.get();
+    if (doc.exists) {
+      Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+      Map<String, int> airQuality = Map<String, int>.from(data['airQuality']);
+      print('Air quality: $airQuality');
+      int latestAqi = 0;
+      int? maxKey;
+      airQuality.forEach((key, value) {
+        int intKey = int.parse(key);
+        if(maxKey == null || intKey > maxKey!){
+          maxKey = intKey;
+          latestAqi = value;
+        }
+      });
+      return latestAqi;
+    } else {
+      print('No data found for date $date'); // Debug print
+      return 0;
+    }
+  }
 }
