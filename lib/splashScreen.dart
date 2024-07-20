@@ -72,11 +72,11 @@ class _SplashScreenState extends State<SplashScreen> {
                   ),
                   const Spacer(),
                   Container(
-                    height: 180,
-                    width: 200,
+                    height: 300,
+                    width: 300,
                     decoration: const BoxDecoration(
                       image: DecorationImage(
-                        image: AssetImage('assets/logo.png'),
+                        image: AssetImage('assets/transparent_logo.png'),
                         fit: BoxFit.cover,
                       ),
                     ),
