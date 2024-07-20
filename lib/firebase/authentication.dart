@@ -12,10 +12,10 @@ class AuthenticationHelper {
   get uid => user.uid;
 
   // Creates a new user with email and password
-  Future<String?> signUp({required String email, required String password, required String username}) async {
+  Future<String?> signUp({required String email, required String password, required String firstName, required String lastName, required String username}) async {
     try {
       await _auth.createUserWithEmailAndPassword(email: email, password: password);
-      await _createUserDocument(username: username, email: email);
+      await _createUserDocument(firstName: firstName, lastName: lastName, username: username, email: email);
       return null;
     } on FirebaseAuthException catch (e) {
       return e.message;
@@ -64,7 +64,7 @@ class AuthenticationHelper {
         );
 
         await _auth.signInWithCredential(credential);
-        await _createUserDocument(username: googleUser!.displayName ?? "Unknown", email: googleUser.email);
+        await _createUserDocument(firstName: googleUser!.displayName!.split(" ")[0], lastName: googleUser.displayName!.split(" ")[1], username: googleUser.displayName ?? "Unknown", email: googleUser.email);
         return null; // Indicating success
       }
       return "No Google authentication details received"; // A clear error message
@@ -77,9 +77,11 @@ class AuthenticationHelper {
     return signInWithGoogle();
   }
 
-  Future<void> _createUserDocument({required String username, required String email}) async {
+  Future<void> _createUserDocument({required String firstName, required String lastName, required String username, required String email}) async {
     final userDoc = _firestore.collection('users').doc(uid);
     final userData = {
+      'firstName': firstName,
+      'lastName': lastName,
       'username': username,
       'email': email,
       'deviceID': '',
@@ -91,6 +93,26 @@ class AuthenticationHelper {
   Future signOut() async {
     await _auth.signOut();
     await _clearLoginState();
+  }
+
+  Future<void> deleteAccount(String password) async {
+    try {
+      User? user = _auth.currentUser;
+      if (user != null) {
+        // Reauthenticate user
+        AuthCredential credential = EmailAuthProvider.credential(email: user.email!, password: password);
+        await user.reauthenticateWithCredential(credential);
+
+        // Delete user data from Firestore
+        await _firestore.collection('users').doc(user.uid).delete();
+
+        // Delete user authentication account
+        await user.delete();
+        await _clearLoginState();
+      }
+    } catch (e) {
+      print('Error deleting account: $e');
+    }
   }
 
   Future<Map<String, int>> getAirQuality(String date) async {
@@ -111,6 +133,7 @@ class AuthenticationHelper {
       return {};
     }
   }
+
   Future<int> getLastAirQuality(String date) async {
     DocumentReference docRef = FirebaseFirestore.instance
         .collection('users')
