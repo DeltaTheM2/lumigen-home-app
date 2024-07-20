@@ -1,9 +1,9 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+
 class DeviceSettingsPage extends StatefulWidget {
   @override
   _DeviceSettingsPageState createState() => _DeviceSettingsPageState();
@@ -35,6 +35,36 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
       veryUnhealthyColor = _getColorFromPrefs(prefs, 'veryUnhealthyColor') ?? Colors.purple;
       hazardousColor = _getColorFromPrefs(prefs, 'hazardousColor') ?? Colors.red;
     });
+
+    // Attempt to sync with the server
+    await _syncWithServer();
+  }
+
+  Future<void> _syncWithServer() async {
+    try {
+      final response = await http.get(Uri.parse('$serverUrl/get_colors'));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          goodColor = Color(data['goodColor']);
+          moderateColor = Color(data['moderateColor']);
+          unhealthySensitiveColor = Color(data['unhealthySensitiveColor']);
+          unhealthyColor = Color(data['unhealthyColor']);
+          veryUnhealthyColor = Color(data['veryUnhealthyColor']);
+          hazardousColor = Color(data['hazardousColor']);
+        });
+
+        // Save the colors locally
+        _saveColor('goodColor', goodColor);
+        _saveColor('moderateColor', moderateColor);
+        _saveColor('unhealthySensitiveColor', unhealthySensitiveColor);
+        _saveColor('unhealthyColor', unhealthyColor);
+        _saveColor('veryUnhealthyColor', veryUnhealthyColor);
+        _saveColor('hazardousColor', hazardousColor);
+      }
+    } catch (e) {
+      print('Failed to sync with server: $e');
+    }
   }
 
   Future<void> _saveColor(String key, Color color) async {
@@ -57,58 +87,55 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
     });
   }
 
-  Future<void> updateAirQuality() async {
-    final response = await http.get(Uri.parse('$serverUrl/update_air_quality'));
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      // Update UI with air quality data if needed
-    } else {
-      // Handle error
-    }
-  }
-
   Future<void> setLightColor(String category, Color color) async {
-    final response = await http.post(
-      Uri.parse('$serverUrl/set_light_color'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'category': category,
-        'red': color.red / 255,
-        'green': color.green / 255,
-        'blue': color.blue / 255,
-      }),
-    );
-    if (response.statusCode == 200) {
-      setState(() {
-        switch (category) {
-          case 'good':
-            goodColor = color;
-            _saveColor('goodColor', color);
-            break;
-          case 'moderate':
-            moderateColor = color;
-            _saveColor('moderateColor', color);
-            break;
-          case 'unhealthySensitive':
-            unhealthySensitiveColor = color;
-            _saveColor('unhealthySensitiveColor', color);
-            break;
-          case 'unhealthy':
-            unhealthyColor = color;
-            _saveColor('unhealthyColor', color);
-            break;
-          case 'veryUnhealthy':
-            veryUnhealthyColor = color;
-            _saveColor('veryUnhealthyColor', color);
-            break;
-          case 'hazardous':
-            hazardousColor = color;
-            _saveColor('hazardousColor', color);
-            break;
-        }
-      });
-    } else {
-      // Handle error
+    // Update locally first
+    setState(() {
+      switch (category) {
+        case 'good':
+          goodColor = color;
+          _saveColor('goodColor', color);
+          break;
+        case 'moderate':
+          moderateColor = color;
+          _saveColor('moderateColor', color);
+          break;
+        case 'unhealthySensitive':
+          unhealthySensitiveColor = color;
+          _saveColor('unhealthySensitiveColor', color);
+          break;
+        case 'unhealthy':
+          unhealthyColor = color;
+          _saveColor('unhealthyColor', color);
+          break;
+        case 'veryUnhealthy':
+          veryUnhealthyColor = color;
+          _saveColor('veryUnhealthyColor', color);
+          break;
+        case 'hazardous':
+          hazardousColor = color;
+          _saveColor('hazardousColor', color);
+          break;
+      }
+    });
+
+    // Attempt to update the server
+    try {
+      final response = await http.post(
+        Uri.parse('$serverUrl/set_light_color'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'category': category,
+          'red': color.red / 255,
+          'green': color.green / 255,
+          'blue': color.blue / 255,
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to update server');
+      }
+    } catch (e) {
+      print('Failed to update server: $e');
     }
   }
 
@@ -120,8 +147,7 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: devicePaired
-            ? ListView(
+        child: ListView(
           children: [
             buildColorPickerRow('Good (Green)', goodColor, (color) => setLightColor('good', color)),
             buildColorPickerRow('Moderate (Yellow)', moderateColor, (color) => setLightColor('moderate', color)),
@@ -131,10 +157,6 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
             buildColorPickerRow('Hazardous (Flashing Red)', hazardousColor, (color) => setLightColor('hazardous', color)),
           ],
         )
-            : ElevatedButton(
-          onPressed: pairDevice,
-          child: Text('Pair a Device'),
-        ),
       ),
     );
   }
@@ -157,7 +179,9 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
               }
             },
             child: Text('Change Color'),
-            style: ElevatedButton.styleFrom(backgroundColor: currentColor),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: currentColor,
+            ),
           ),
         ],
       ),
