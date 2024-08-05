@@ -219,12 +219,12 @@ class _DeviceSettingsPageState extends State<DeviceSettingsPage> {
             ? ListView(
           children: [
             Text('Device ID: $deviceId'),
-            buildColorPickerRow('Good (Green)', goodColor, (color) => setLightColor('good', color)),
-            buildColorPickerRow('Moderate (Yellow)', moderateColor, (color) => setLightColor('moderate', color)),
-            buildColorPickerRow('Unhealthy for Sensitive Groups (Orange)', unhealthySensitiveColor, (color) => setLightColor('unhealthySensitive', color)),
-            buildColorPickerRow('Unhealthy (Red)', unhealthyColor, (color) => setLightColor('unhealthy', color)),
-            buildColorPickerRow('Very Unhealthy (Purple)', veryUnhealthyColor, (color) => setLightColor('veryUnhealthy', color)),
-            buildColorPickerRow('Hazardous (Flashing Red)', hazardousColor, (color) => setLightColor('hazardous', color)),
+            buildColorPickerRow('Good', goodColor, (color) => setLightColor('good', color)),
+            buildColorPickerRow('Moderate', moderateColor, (color) => setLightColor('moderate', color)),
+            buildColorPickerRow('Unhealthy for Sensitive Groups', unhealthySensitiveColor, (color) => setLightColor('unhealthySensitive', color)),
+            buildColorPickerRow('Unhealthy', unhealthyColor, (color) => setLightColor('unhealthy', color)),
+            buildColorPickerRow('Very Unhealthy', veryUnhealthyColor, (color) => setLightColor('veryUnhealthy', color)),
+            buildColorPickerRow('Hazardous', hazardousColor, (color) => setLightColor('hazardous', color)),
           ],
         )
             : Column(
