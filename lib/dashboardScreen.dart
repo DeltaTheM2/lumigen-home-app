@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:lumigen/firebase/home.dart';
+import 'package:lumigen/home.dart';
 import 'package:lumigen/insightsPage.dart';
 import 'package:lumigen/userPage.dart';
 
