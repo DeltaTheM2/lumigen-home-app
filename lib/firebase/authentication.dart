@@ -45,6 +45,7 @@ class AuthenticationHelper {
   Future<void> _clearLoginState() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('isLoggedIn');
+    await prefs.remove('deviceID');
   }
 
   Future<bool> isLoggedIn() async {
