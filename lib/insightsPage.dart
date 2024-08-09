@@ -1,9 +1,9 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:fl_chart/fl_chart.dart';
-import 'package:intl/intl.dart';
+import 'package:lumigen/firebase/authentication.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 import 'dart:convert';
 
 class InsightsPage extends StatefulWidget {
@@ -12,199 +12,163 @@ class InsightsPage extends StatefulWidget {
 }
 
 class _InsightsPageState extends State<InsightsPage> {
-  List<FlSpot> aqiData = [];
+  Map<String, int> airQualityData = {};
   bool isLoading = true;
-  String selectedTimeFrame = '7 days';
+  String selectedDuration = '1 Week'; // Default duration
 
   @override
   void initState() {
     super.initState();
-    loadCachedData();
+    loadAirQualityData();
   }
 
-  Future<void> loadCachedData() async {
+  Future<void> loadAirQualityData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? cachedData = prefs.getString('aqiData_$selectedTimeFrame');
+    List<String> dates = _getDateRange(selectedDuration);
 
-    if (cachedData != null) {
-      List<dynamic> decodedData = jsonDecode(cachedData);
-      setState(() {
-        aqiData = decodedData.map((item) => FlSpot(item[0], item[1])).toList();
-        isLoading = false;
-      });
-    } else {
-      fetchData();
+    Map<String, int> allData = {};
+    for (String date in dates) {
+      // Check if data is cached
+      if (prefs.containsKey(date)) {
+        allData.addAll(
+            Map<String, int>.from(jsonDecode(prefs.getString(date)!)));
+      } else {
+        Map<String, int> data = await AuthenticationHelper().getAirQuality(date);
+        if (data.isNotEmpty) {
+          allData.addAll(data);
+          prefs.setString(date, jsonEncode(data)); // Cache the data
+        }
+      }
     }
-  }
-
-  Future<void> fetchData() async {
-    DateTime now = DateTime.now();
-    DateTime startDate;
-
-    switch (selectedTimeFrame) {
-      case '1 month':
-        startDate = now.subtract(Duration(days: 30));
-        break;
-      case 'All time':
-        startDate = DateTime(1970);
-        break;
-      case '7 days':
-      default:
-        startDate = now.subtract(Duration(days: 7));
-        break;
-    }
-
-    QuerySnapshot snapshot = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(FirebaseAuth.instance.currentUser!.uid)
-        .collection('air-quality')
-        .where('timestamp', isGreaterThanOrEqualTo: startDate)
-        .orderBy('timestamp')
-        .get();
-
-    List<FlSpot> data = snapshot.docs.map((doc) {
-      Map<String, dynamic> airQualityData = doc['airQuality'];
-      double sum = 0;
-      int count = 0;
-      airQualityData.forEach((key, value) {
-        sum += value;
-        count++;
-      });
-      double meanAQI = sum / count;
-      return FlSpot(
-        doc['timestamp'].millisecondsSinceEpoch.toDouble(),
-        meanAQI,
-      );
-    }).toList();
 
     setState(() {
-      aqiData = data;
+      airQualityData = allData;
       isLoading = false;
     });
-
-    saveDataToCache(data);
   }
 
-  Future<void> saveDataToCache(List<FlSpot> data) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<List<double>> encodedData = data.map((spot) => [spot.x, spot.y]).toList();
-    prefs.setString('aqiData_$selectedTimeFrame', jsonEncode(encodedData));
+  List<String> _getDateRange(String duration) {
+    DateTime now = DateTime.now();
+    List<String> dates = [];
+    if (duration == '1 Week') {
+      for (int i = 0; i < 7; i++) {
+        dates.add(DateFormat('MM-dd-yyyy').format(now.subtract(Duration(days: i))));
+      }
+    } else if (duration == '1 Month') {
+      for (int i = 0; i < 30; i++) {
+        dates.add(DateFormat('MM-dd-yyyy').format(now.subtract(Duration(days: i))));
+      }
+    } else if (duration == 'All Time') {
+      // Add your logic for all-time data; this might involve pulling all available data
+      dates = ['01-01-2023']; // Placeholder: Modify this based on your data
+    }
+    return dates;
   }
 
-  List<LineChartBarData> getLineChartData() {
-    return [
-      LineChartBarData(
-        spots: aqiData,
-        isCurved: true,
-        barWidth: 3,
-        isStrokeCapRound: true,
-        dotData: FlDotData(show: false),
-        belowBarData: BarAreaData(
-          show: true,
-        ),
-      ),
-    ];
-  }
-
-  Widget buildChart() {
-    return LineChart(
-      LineChartData(
-        gridData: FlGridData(
-          show: true,
-          drawVerticalLine: true,
-          getDrawingHorizontalLine: (value) {
-            return FlLine(
-              color: Color(0xffe7e8ec),
-              strokeWidth: 1,
-            );
-          },
-          getDrawingVerticalLine: (value) {
-            return FlLine(
-              color: Color(0xffe7e8ec),
-              strokeWidth: 1,
-            );
-          },
-        ),
-        titlesData: FlTitlesData(
-          leftTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              getTitlesWidget: (value, meta) {
-                return Text(
-                  value.toString(),
-                  style: TextStyle(
-                    color: Colors.black54,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                );
-              },
-            ),
-          ),
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              getTitlesWidget: (value, meta) {
-                DateTime date =
-                DateTime.fromMillisecondsSinceEpoch(value.toInt());
-                return SideTitleWidget(
-                  axisSide: meta.axisSide,
-                  child: Text(
-                    DateFormat.MMMd().format(date),
-                    style: TextStyle(
-                      color: Colors.black54,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
-        borderData: FlBorderData(
-          show: true,
-          border: Border.all(
-            color: Color(0xffe7e8ec),
-            width: 1,
-          ),
-        ),
-        lineBarsData: getLineChartData(),
-      ),
-    );
+  List<FlSpot> _generateChartData() {
+    List<FlSpot> chartData = [];
+    airQualityData.forEach((key, value) {
+      try {
+        // Check if the key is already a date
+        if (key.contains('-')) {
+          DateTime date = DateFormat('MM-dd-yyyy').parse(key);
+          double x = date.millisecondsSinceEpoch.toDouble() / (1000 * 60 * 60 * 24);
+          double y = value.toDouble();
+          chartData.add(FlSpot(x, y));
+        } else {
+          // Otherwise, treat it as an epoch timestamp
+          double x = int.parse(key).toDouble() / (1000 * 60 * 60 * 24);
+          double y = value.toDouble();
+          chartData.add(FlSpot(x, y));
+        }
+      } catch (e) {
+        print('Error parsing date: $key, $e');
+      }
+    });
+    chartData.sort((a, b) => a.x.compareTo(b.x)); // Sort by date
+    return chartData;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            DropdownButton<String>(
-              value: selectedTimeFrame,
-              items: <String>['7 days', '1 month', 'All time']
-                  .map((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
-              onChanged: (String? newValue) {
-                setState(() {
-                  selectedTimeFrame = newValue!;
-                  isLoading = true;
-                  loadCachedData();
-                });
-              },
-            ),
-            SizedBox(height: 20),
-            Expanded(
-              child: isLoading
-                  ? Center(child: CircularProgressIndicator())
-                  : buildChart(),
-            ),
-          ],
+    return Column(
+      children: [
+        DropdownButton<String>(
+          value: selectedDuration,
+          items: ['1 Week', '1 Month', 'All Time'].map((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(value),
+            );
+          }).toList(),
+          onChanged: (value) {
+            setState(() {
+              selectedDuration = value!;
+              isLoading = true;
+              loadAirQualityData(); // Reload data when duration changes
+            });
+          },
         ),
+        isLoading
+            ? Center(child: CircularProgressIndicator())
+            : airQualityData.isEmpty
+            ? Center(child: Text('No data available'))
+            : Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: SizedBox(
+            width: double.infinity,
+            height: 400, // Specify a fixed height
+            child: LineChart(
+              LineChartData(
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: _generateChartData(),
+                    isCurved: true,
+                    barWidth: 2,
+                    color: Colors.blue,
+                    belowBarData: BarAreaData(
+                      show: true,
+                      color: Colors.blue.withOpacity(0.2),
+                    ),
+                    dotData: FlDotData(show: false),
+                  ),
+                ],
+                titlesData: FlTitlesData(
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 40,
+                      getTitlesWidget: (value, meta) {
+                        if (value % 50 == 0) {
+                          return Text(value.toInt().toString());
+                        }
+                        return Container();
+                      },
+                    ),
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 35,
+                      getTitlesWidget: (value, meta) {
+                        DateTime date = DateTime.fromMillisecondsSinceEpoch(
+                          (value * 1000 * 60 * 60 * 24).toInt(),
+                        );
+                        return Text(DateFormat('MM-dd').format(date));
+                      },
+                    ),
+                  ),
+                ),
+                borderData: FlBorderData(
+                  show: true,
+                  border: Border.all(color: Colors.grey, width: 1),
+                ),
+                gridData: FlGridData(show: true, drawVerticalLine: true),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
