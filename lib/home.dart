@@ -45,13 +45,34 @@ class _HomePageState extends State<HomePage> {
     int latestAqi = await AuthenticationHelper().getLastAirQuality(date);
     double newProgress = latestAqi / 400;
 
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? cachedData = prefs.getString('homePageData');
+    bool isDataChanged = true;
+
+    if (cachedData != null) {
+      Map<String, dynamic> data = jsonDecode(cachedData);
+      int cachedAqi = data['aqi'];
+      double cachedProgress = data['progress'];
+
+      // Check if the new data is the same as the cached data
+      if (latestAqi == cachedAqi && newProgress == cachedProgress) {
+        isDataChanged = false;
+      }
+    }
+
     setState(() {
       aqi = latestAqi;
       progress = newProgress;
       isLoading = false;
     });
 
-    saveDataToCache(latestAqi, newProgress);
+    if (isDataChanged) {
+      saveDataToCache(latestAqi, newProgress);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No new data available')),
+      );
+    }
   }
 
   Future<void> saveDataToCache(int aqi, double progress) async {

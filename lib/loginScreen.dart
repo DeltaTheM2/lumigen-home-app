@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:lumigen/dashboardScreen.dart';
 import 'package:lumigen/firebase/authentication.dart';
+import 'package:lumigen/forgotPasswordPage.dart';
 import 'package:lumigen/signupScreen.dart';
+
 
 class LoginPage extends StatefulWidget {
   @override
@@ -71,14 +73,28 @@ class _LoginPageState extends State<LoginPage> {
                   child: Text('Login'),
                 ),
               ),
-              TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => SignUp()),
-                  );
-                },
-                child: Text('Sign Up'),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => SignUp()),
+                      );
+                    },
+                    child: Text('Sign Up'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => ForgotPasswordScreen()),
+                      );
+                    },
+                    child: Text('Forgot Password?'),
+                  ),
+                ],
               ),
             ],
           ),

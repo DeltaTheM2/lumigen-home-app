@@ -36,6 +36,14 @@ class AuthenticationHelper {
       return e.message;
     }
   }
+  Future<String?> resetPassword(String email) async {
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      return null;
+    } catch (e) {
+      return e.toString();
+    }
+  }
 
   Future<void> _saveLoginState() async {
     final prefs = await SharedPreferences.getInstance();

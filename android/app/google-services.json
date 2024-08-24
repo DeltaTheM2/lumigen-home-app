@@ -7,9 +7,28 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:969693389735:android:5d12e6a499d719e45f4c82",
+        "mobilesdk_app_id": "1:969693389735:android:0ad9d5c7c9673b0c5f4c82",
         "android_client_info": {
-          "package_name": "com.codingmind.lumigen"
+          "package_name": "coc.codingminds.lumigen"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC4xi4QIwbmfPJzTN4rqP6ogbLX84iEUSg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:969693389735:android:fe70d826049ee6945f4c82",
+        "android_client_info": {
+          "package_name": "com.codingminds.lumigen"
         }
       },
       "oauth_client": [],
