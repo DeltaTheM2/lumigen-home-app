@@ -108,12 +108,13 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   Positioned(
-                    bottom: 2,
+                    bottom: 8,
                     child: Text(
-                      '$aqi AQI',
+                      '$aqi', textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 24),
                     ),
                   ),
+                  Positioned(child: Text('Room Air Quality Index',),),
                   TextButton(
                     onPressed: () async {
                       await fetchData();
