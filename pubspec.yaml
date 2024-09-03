@@ -3,7 +3,7 @@ description: "Record the Air Quality Index of The Room You're In"
 
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 1.2.0+3
+version: 1.0.1+4h
 
 environment:
   sdk: '>=3.4.4 <4.0.0'

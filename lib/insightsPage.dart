@@ -146,15 +146,31 @@ class _InsightsPageState extends State<InsightsPage> {
                       },
                     ),
                   ),
+                  topTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: false
+                    )
+                  ),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
                       reservedSize: 35,
+                      interval: 2, // Show every 2nd label
                       getTitlesWidget: (value, meta) {
                         DateTime date = DateTime.fromMillisecondsSinceEpoch(
                           (value * 1000 * 60 * 60 * 24).toInt(),
                         );
-                        return Text(DateFormat('MM-dd').format(date));
+                        return SideTitleWidget(
+                          axisSide: meta.axisSide,
+                          child: Text(
+                            DateFormat('MM/dd').format(date), // Use shorter date format
+                            style: TextStyle(
+                              fontSize: 10,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          angle: -45, // Rotate the labels by 45 degrees
+                        );
                       },
                     ),
                   ),

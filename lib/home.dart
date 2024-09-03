@@ -86,7 +86,8 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
+    return SingleChildScrollView(
+
       child: isLoading
           ? CircularProgressIndicator()
           : Column(
@@ -97,24 +98,21 @@ class _HomePageState extends State<HomePage> {
               padding: EdgeInsets.all(20),
               child: Column(
                 children: [
-                  Positioned(
-                    bottom: 8,
-                    child: ArcProgressIndicator(
-                      progress: progress,
-                      child: const Icon(
-                        Icons.air,
-                        size: 75,
-                      ),
+
+                  ArcProgressIndicator(
+                    progress: progress,
+                    child: const Icon(
+                      Icons.air,
+                      size: 75,
                     ),
                   ),
-                  Positioned(
-                    bottom: 8,
-                    child: Text(
-                      '$aqi', textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 24),
-                    ),
+
+                  Text(
+                    '$aqi AQI',
+                    style: TextStyle(fontSize: 24),
                   ),
-                  Positioned(child: Text('Room Air Quality Index',),),
+
+
                   TextButton(
                     onPressed: () async {
                       await fetchData();
@@ -127,6 +125,7 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                   ),
+
                 ],
               ),
             ),
@@ -135,4 +134,6 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+
+
 }
